@@ -4,7 +4,7 @@ on:
     branches:
       - main
     paths:
-      - server/GetPetsLambda
+      - server/GetPetsLambda/**
       - .github/workflows/deploy-getpetslambda.yml
 
 defaults:
