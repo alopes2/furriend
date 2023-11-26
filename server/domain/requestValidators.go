@@ -42,7 +42,7 @@ func CreatePetRequestValidator(pet Pet) (ValidationResult) {
     validationResult.Errors = append(validationResult.Errors, "Pet type invalid")
   }
 
-  validationResult.IsValid = len(validationResult.Errors) > 0;
+  validationResult.IsValid = len(validationResult.Errors) == 0;
 
   return validationResult;
 }
