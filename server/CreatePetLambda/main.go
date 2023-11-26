@@ -13,6 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 
+	"github.com/google/uuid"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -23,7 +25,9 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 
 	logger.Info("Processing request data for request")
 
-	pet := domain.Pet{}
+	pet := domain.Pet{
+    PetID: uuid.New().String(),
+  }
 
 	err := json.Unmarshal([]byte(request.Body), &pet)
 
