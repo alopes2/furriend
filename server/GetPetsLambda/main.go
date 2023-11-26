@@ -3,9 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"log"
 	"strings"
 
 	"server/domain"
@@ -16,12 +14,19 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+
+	log "github.com/sirupsen/logrus"
 )
 
-func handleRequest(_ context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	fmt.Printf("Processing request data for request %s.\n", request.RequestContext.RequestID)
+func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+  petID := request.PathParameters["petID"]
+  
+  logger := log.New().WithContext(ctx).WithFields(log.Fields{
+    domain.ReqKey: request.RequestContext.RequestID,
+    domain.PetID: petID,
+  });
 
-  petID := request.PathParameters["petID"];
+	logger.Info("Processing request data for request")
 
   if strings.TrimSpace(petID) == "" {
     return events.APIGatewayProxyResponse{StatusCode: 400}, nil
@@ -37,10 +42,8 @@ func handleRequest(_ context.Context, request events.APIGatewayProxyRequest) (ev
 	// Create DynamoDB client
 	svc := dynamodb.New(sess)
 
-	tableName := "furriend_pets"
-
 	result, err := svc.GetItem(&dynamodb.GetItemInput{
-		TableName: aws.String(tableName),
+		TableName: aws.String(domain.PetsTable),
 		Key: map[string]*dynamodb.AttributeValue{
 			"PetID": {
 				S: aws.String(petID),
@@ -49,25 +52,25 @@ func handleRequest(_ context.Context, request events.APIGatewayProxyRequest) (ev
 	})
   
 	if err != nil {
-		log.Fatalf("Got error calling GetItem: %s", err)
+		logger.Error("Got error calling GetItem: ", err)
 	}
 
 	if result.Item == nil {
-		msg := "Could not find '" + petID + "'"
-		return events.APIGatewayProxyResponse{}, errors.New(msg)
+		logger.Warn(fmt.Sprintf("Could not find pet with ID {petID}, %s", petID));
+		return events.APIGatewayProxyResponse{StatusCode: 404}, nil
 	}
 
 	pet := domain.Pet{}
 
 	err = dynamodbattribute.UnmarshalMap(result.Item, &pet)
 	if err != nil {
-		panic(fmt.Sprintf("Failed to unmarshal Record, %v", err))
+		log.Warn(fmt.Sprintf("Failed to unmarshal Record, %v", err))
 	}
 
   jsonResponse, jsonErr := json.Marshal(pet)
 
   if jsonErr != nil {
-		panic(fmt.Sprintf("Failed to unmarshal Record, %v", jsonErr))
+		logger.Error("Failed to unmarshal Record", jsonErr)
   }
 
 
