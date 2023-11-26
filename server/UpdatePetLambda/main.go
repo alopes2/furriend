@@ -66,15 +66,19 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 				S: aws.String(petID),
 			},
 		},
+    ExpressionAttributeNames: map[string]*string{
+			"#name": aws.String("Name"),
+			"#specie": aws.String("Specie"),
+		},
     ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			"name": {
+			":name": {
 				S: aws.String(pet.Name),
 			},
-			"specie": {
+			":specie": {
 				S: aws.String(pet.Specie),
 			},
 		},
-    UpdateExpression: aws.String("set Name = :name, Specie = :specie"),
+    UpdateExpression: aws.String("set #name = :name, #specie = :specie"),
 	})
 
 	logger.WithFields(logrus.Fields{
