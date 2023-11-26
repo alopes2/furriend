@@ -76,7 +76,6 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 	  return events.APIGatewayProxyResponse{StatusCode: 500}, nil
   }
 
-
 	return events.APIGatewayProxyResponse{Body: string(jsonResponse), StatusCode: 200}, nil
 }
 
