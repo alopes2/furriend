@@ -53,6 +53,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
   
 	if err != nil {
 		logger.Error("Got error calling GetItem: ", err)
+	  return events.APIGatewayProxyResponse{StatusCode: 500}, nil
 	}
 
 	if result.Item == nil {
@@ -65,12 +66,14 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 	err = dynamodbattribute.UnmarshalMap(result.Item, &pet)
 	if err != nil {
 		log.Warn(fmt.Sprintf("Failed to unmarshal Record, %v", err))
+	  return events.APIGatewayProxyResponse{StatusCode: 500}, nil
 	}
 
   jsonResponse, jsonErr := json.Marshal(pet)
 
   if jsonErr != nil {
 		logger.Error("Failed to unmarshal Record", jsonErr)
+	  return events.APIGatewayProxyResponse{StatusCode: 500}, nil
   }
 
 
