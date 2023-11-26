@@ -53,7 +53,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
   }).Info("Deletion result")
   
 	if err != nil {
-		logger.Error("Got error calling GetItem: ", err)
+		logger.Error("Got error calling DeleteItem: ", err)
 	  return events.APIGatewayProxyResponse{StatusCode: 500}, nil
 	}
 

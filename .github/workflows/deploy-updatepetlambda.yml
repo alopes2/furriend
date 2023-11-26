@@ -1,0 +1,39 @@
+name: Deploy UpdatePetLambda
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - server/UpdatePetLambda/**
+      - .github/workflows/deploy-updatepetlambda.yml
+
+defaults:
+  run:
+    working-directory: server/UpdatePetLambda
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v4.1.0
+        with:
+          go-version: "1.21.4"
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: "eu-central-1"
+
+      - name: Build Lambda
+        run: GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o build/ . ../domain
+
+        # The lambda requires that the executing file be named "main"
+      - name: Rename file
+        run: mv ./build/UpdatePetLambda ./build/main
+
+      - name: Zip Lambda functions
+        run: zip -j build/main.zip ./build/main
+
+      - name: Update Lambdas code
+        run: aws lambda update-function-code --function-name=UpdatePet --zip-file=fileb://build/main.zip

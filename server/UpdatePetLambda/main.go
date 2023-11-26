@@ -12,24 +12,27 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 
-	"github.com/google/uuid"
-
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
 func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	petID := request.PathParameters["petID"]
+
 	logger := log.New().WithContext(ctx).WithFields(log.Fields{
 		domain.ReqKey: request.RequestContext.RequestID,
+		domain.PetID:  petID,
 	})
 
 	logger.Info("Processing request data for request")
 
-	pet := domain.Pet{
-    PetID: uuid.New().String(),
-  }
+	if strings.TrimSpace(petID) == "" {
+		return events.APIGatewayProxyResponse{StatusCode: 400}, nil
+	}
 
+  pet := domain.Pet{}
+  
 	err := json.Unmarshal([]byte(request.Body), &pet)
   pet.Specie = strings.ToUpper(pet.Specie)
 
@@ -56,31 +59,34 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 	// Create DynamoDB client
 	svc := dynamodb.New(sess)
 
-	av, err := dynamodbattribute.MarshalMap(pet)
-
-	if err != nil {
-		logger.WithField("Pet", pet).Error("Failed to marshal Pet", err)
-		return events.APIGatewayProxyResponse{StatusCode: 500}, nil
-	}
-
-	_, err = svc.PutItem(&dynamodb.PutItemInput{
+	result, err := svc.UpdateItem(&dynamodb.UpdateItemInput{
 		TableName: aws.String(domain.PetsTable),
-		Item:      av,
+		Key: map[string]*dynamodb.AttributeValue{
+			"PetID": {
+				S: aws.String(petID),
+			},
+		},
+    ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			"name": {
+				S: aws.String(pet.Name),
+			},
+			"specie": {
+				S: aws.String(pet.Specie),
+			},
+		},
+    UpdateExpression: aws.String("set Name = :name, Specie = :specie"),
 	})
 
+	logger.WithFields(logrus.Fields{
+		"UpdateResult": result,
+	}).Info("Update result")
+
 	if err != nil {
-		logger.Error("Got error calling PutItem: ", err)
+		logger.Error("Got error calling UpdateItem ", err)
 		return events.APIGatewayProxyResponse{StatusCode: 500}, nil
 	}
 
-	jsonResponse, jsonErr := json.Marshal(pet)
-
-	if jsonErr != nil {
-		logger.Error("Failed to unmarshal Record ", jsonErr)
-		return events.APIGatewayProxyResponse{StatusCode: 500}, nil
-	}
-
-	return events.APIGatewayProxyResponse{Body: string(jsonResponse), StatusCode: 200}, nil
+	return events.APIGatewayProxyResponse{StatusCode: 200}, nil
 }
 
 func main() {

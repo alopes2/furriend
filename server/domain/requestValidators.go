@@ -10,39 +10,39 @@ import (
 // IsValid is true when validation succeeds
 // if false, Errors will have values
 type ValidationResult struct {
-  IsValid bool;
-  Errors []string;
+	IsValid bool
+	Errors  []string
 }
 
 const (
-  petNameMaxLength = 50;
+	petNameMaxLength = 50
 )
 
-// Validates a Pet from the request     
-func CreatePetRequestValidator(pet Pet) (ValidationResult) {
-  validationResult := ValidationResult {}
-  petTypes := []string {
-    "DOG",
-    "CAT",
-  }
+// PetRequestValidator validates a Pet from the request
+func PetRequestValidator(pet Pet) ValidationResult {
+	validationResult := ValidationResult{}
+	petSpecies := []string{
+		"DOG",
+		"CAT",
+	}
 
-  if (strings.TrimSpace(pet.Name) == "") {
-    validationResult.Errors = append(validationResult.Errors, "Pet name required")
-  }
+	if strings.TrimSpace(pet.Name) == "" {
+		validationResult.Errors = append(validationResult.Errors, "Pet name required")
+	}
 
-  if (len(pet.Name) > petNameMaxLength) {
-    validationResult.Errors = append(validationResult.Errors, "Pet name should be less than 50 chars")
-  }
+	if len(pet.Name) > petNameMaxLength {
+		validationResult.Errors = append(validationResult.Errors, "Pet name should be less than 50 chars")
+	}
 
-  if (strings.TrimSpace(pet.Type) == "") {
-    validationResult.Errors = append(validationResult.Errors, "Pet type required")
-  }
+	if strings.TrimSpace(pet.Specie) == "" {
+		validationResult.Errors = append(validationResult.Errors, "Pet specie required")
+	}
 
-  if (!slices.Contains(petTypes, strings.ToUpper(pet.Type))) {
-    validationResult.Errors = append(validationResult.Errors, "Pet type invalid")
-  }
+	if !slices.Contains(petSpecies, strings.ToUpper(pet.Specie)) {
+		validationResult.Errors = append(validationResult.Errors, "Pet specie invalid")
+	}
 
-  validationResult.IsValid = len(validationResult.Errors) == 0;
+	validationResult.IsValid = len(validationResult.Errors) == 0
 
-  return validationResult;
+	return validationResult
 }
