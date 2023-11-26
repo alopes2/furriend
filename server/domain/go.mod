@@ -1,3 +1,3 @@
-module Furriend.Domain
+module server/domain
 
 go 1.21.4

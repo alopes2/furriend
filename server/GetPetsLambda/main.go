@@ -7,7 +7,8 @@ import (
 	"fmt"
 	"log"
 
-	domain "Furriend.Domain"
+	"server/domain"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
@@ -37,7 +38,7 @@ func handleRequest(_ context.Context, request events.APIGatewayProxyRequest) (ev
 		TableName: aws.String(tableName),
 		Key: map[string]*dynamodb.AttributeValue{
 			"PetID": {
-				N: aws.String(petID),
+				S: aws.String(petID),
 			},
 		},
 	})
@@ -51,7 +52,7 @@ func handleRequest(_ context.Context, request events.APIGatewayProxyRequest) (ev
 		return events.APIGatewayProxyResponse{}, errors.New(msg)
 	}
 
-	pet :=domain.Pet{}
+	pet := domain.Pet{}
 
 	err = dynamodbattribute.UnmarshalMap(result.Item, &pet)
 	if err != nil {

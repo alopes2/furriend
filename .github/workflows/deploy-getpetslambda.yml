@@ -26,7 +26,10 @@ jobs:
           aws-region: "eu-central-1"
 
       - name: Build Lambda
-        run: GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o build/main
+        run: GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o build/ . ../domain
+
+      - name: Rename file
+        run: mv ./build/GetPetsLambda ./build/main
 
       - name: Zip Lambda functions
         run: zip -j build/main.zip ./build/main
