@@ -28,6 +28,7 @@ jobs:
       - name: Build Lambda
         run: GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o build/ . ../domain
 
+        # The lambda requires that the executing file be named "main"
       - name: Rename file
         run: mv ./build/GetPetsLambda ./build/main
 

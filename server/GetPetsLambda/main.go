@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	"server/domain"
 
@@ -19,7 +20,12 @@ import (
 
 func handleRequest(_ context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	fmt.Printf("Processing request data for request %s.\n", request.RequestContext.RequestID)
-	fmt.Printf("Body size = %d.\n", len(request.Body))
+
+  petID := request.PathParameters["petID"];
+
+  if strings.TrimSpace(petID) == "" {
+    return events.APIGatewayProxyResponse{StatusCode: 400}, nil
+  }
 
 	// Initialize a session that the SDK will use to load
 	// credentials from the shared credentials file ~/.aws/credentials
@@ -32,7 +38,6 @@ func handleRequest(_ context.Context, request events.APIGatewayProxyRequest) (ev
 	svc := dynamodb.New(sess)
 
 	tableName := "furriend_pets"
-	petID := "123"
 
 	result, err := svc.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(tableName),
