@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"strings"
 
 	"server/domain"
 
@@ -30,6 +31,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
   }
 
 	err := json.Unmarshal([]byte(request.Body), &pet)
+  pet.Type = strings.ToUpper(pet.Type)
 
 	if err != nil {
 		logger.WithField("Body", request.Body).Error("Failed to marshal Pet ", err)
@@ -38,12 +40,6 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 	}
 
 	validationResult := domain.CreatePetRequestValidator(pet)
-
-  logger.WithFields(log.Fields{
-    "Request": pet,
-    "ValidationResult": validationResult.IsValid,
-    "Errors": validationResult.Errors,
-  })
 
 	if !validationResult.IsValid {
 		errorResponse, _ := json.Marshal(validationResult.Errors)
@@ -80,7 +76,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 	jsonResponse, jsonErr := json.Marshal(pet)
 
 	if jsonErr != nil {
-		logger.Error("Failed to unmarshal Record", jsonErr)
+		logger.Error("Failed to unmarshal Record ", jsonErr)
 		return events.APIGatewayProxyResponse{StatusCode: 500}, nil
 	}
 
