@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"strings"
 
 	"server/domain"
@@ -13,8 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -42,7 +39,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 	// Create DynamoDB client
 	svc := dynamodb.New(sess)
 
-	result, err := svc.GetItem(&dynamodb.GetItemInput{
+	result, err := svc.DeleteItem(&dynamodb.DeleteItemInput{
 		TableName: aws.String(domain.PetsTable),
 		Key: map[string]*dynamodb.AttributeValue{
 			"PetID": {
@@ -50,34 +47,18 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 			},
 		},
 	})
+
+  logger.WithFields(logrus.Fields{
+    "DeleteResult": result,
+  }).Info("Deletion result")
   
 	if err != nil {
-		logger.Error("Got error calling GetItem ", err)
+		logger.Error("Got error calling GetItem: ", err)
 	  return events.APIGatewayProxyResponse{StatusCode: 500}, nil
 	}
 
-	if result.Item == nil {
-		logger.Warn(fmt.Sprintf("Could not find pet with ID {petID}, %s", petID));
-		return events.APIGatewayProxyResponse{StatusCode: 404}, nil
-	}
 
-	pet := domain.Pet{}
-
-	err = dynamodbattribute.UnmarshalMap(result.Item, &pet)
-	if err != nil {
-		log.Warn(fmt.Sprintf("Failed to unmarshal Record, %v", err))
-	  return events.APIGatewayProxyResponse{StatusCode: 500}, nil
-	}
-
-  jsonResponse, jsonErr := json.Marshal(pet)
-
-  if jsonErr != nil {
-		logger.Error("Failed to unmarshal Record", jsonErr)
-	  return events.APIGatewayProxyResponse{StatusCode: 500}, nil
-  }
-
-
-	return events.APIGatewayProxyResponse{Body: string(jsonResponse), StatusCode: 200}, nil
+	return events.APIGatewayProxyResponse{StatusCode: 204}, nil
 }
 
 func main() {
