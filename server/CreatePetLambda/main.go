@@ -35,6 +35,12 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 
 	validationResult := domain.CreatePetRequestValidator(pet)
 
+  logger.WithFields(log.Fields{
+    "Request": pet,
+    "ValidationResult": validationResult.IsValid,
+    "Errors": validationResult.Errors,
+  })
+
 	if !validationResult.IsValid {
 		errorResponse, _ := json.Marshal(validationResult.Errors)
 		return events.APIGatewayProxyResponse{Body: string(errorResponse), StatusCode: 400}, nil
